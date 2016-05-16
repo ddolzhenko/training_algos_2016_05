@@ -15,7 +15,7 @@ typedef std::function<int(int*, int, int)> SearchFunc;
 
 int linear_sort(int* A, int size, int key)
 {
-	assert(size > 0);
+	assert(size >= 0);
 	for (int i = 0; i < size; ++i)
 	{
 		if (A[i] == key)
@@ -27,6 +27,7 @@ int linear_sort(int* A, int size, int key)
 
 int linear_sort_optimized(int* A, int size, int key)
 {
+	assert(size >= 0);
 	A[size] = key;
 	int i = 0;
 
@@ -43,6 +44,11 @@ int linear_sort_optimized(int* A, int size, int key)
 
 int linear_sort_tricky(int* A, int size, int key)
 {
+	assert(size >= 0);
+
+	if (size == 0)
+		return -1;
+
 	int back = size - 1;
 
 	if (A[back] == key)
@@ -94,17 +100,21 @@ struct TestData
 	std::string description;
 };
 
+struct FunctionWrapper
+{
+	SearchFunc func;
+	std::string description;
+};
+
 int main()
 {
-	int A1[10] = {};
-	int A2[10] = {2};
-	int A3[10] = { 1 };
-	int A4[10] = { 1, 2 };
-	int A5[10] = { 3, 4 };
-	int A6[10] = { 3, 8, 1, 10 };
-	int A7[10] = { 3, 8, 2, 10 };
-	
-	std::vector<SearchFunc> functions = { linear_sort, linear_sort_optimized, linear_sort_tricky };
+	std::vector<FunctionWrapper> functions =
+	{ 
+		{ linear_sort, "linear_sort"}, 
+		{ linear_sort_optimized, "linear_sort_optimized" },
+		{ linear_sort_tricky, "linear_sort_tricky" }
+	};
+
 	std::vector<TestData> testData = {
 		{
 			{}, 0, -1, "Trivial empty"
@@ -129,20 +139,18 @@ int main()
 		}
 	};
 
-	for (SearchFunc function : functions)
+	for (FunctionWrapper wrapper : functions)
 	{
 		for (TestData test : testData)
 		{
-			if (!checkSort(function, test.input, test.size, test.answer))
+			if (!checkSort(wrapper.func, test.input, test.size, test.answer))
 			{
-				
+				cout << "Test failed: " << wrapper.description << " - " << test.description << endl;
 			}
 		}
-		//checkSort(function, A1, 0, -1);
-		//checkSort(linear_sort_optimized, { 0, 0, 0 }, 0, -1);
 	}
 
-	
+	system("pause");
     return 0;
 }
 
