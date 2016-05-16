@@ -76,20 +76,6 @@ int linear_sort_tricky(int* A, int size, int key)
 bool checkSort( SearchFunc sort, int A[], int size, int targetIndex )
 {
 	return (targetIndex == sort(A, size, 1));
-
-	int test1[10];
-	int size1 = 0;
-	int key = 5;
-
-	int test2[10] = { 2 };
-	int size2 = 1;
-
-	int test3[10] = { 5 };
-	int size3 = 1;
-
-	int test4[10] = { 5 };
-
-	return false;
 }
 
 struct TestData
