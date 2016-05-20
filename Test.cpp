@@ -72,6 +72,57 @@ int linear_search_tricky(int* A, int size, int key)
 	return i;
 }
 
+/*
+// длина полуоткрытого интервала равна разности end - begin
+// единственным невалидным елементом, который можно вернуть - это конец полуоткрытого интервала
+// можно указать пустой интервал
+// полуоткрытый интервал можно всегда поделить пополам на 2 полуоткрытых интервала
+
+// исправить алгоритм
+def bin_search(A, k):
+	assert is.sorted(A)
+	b, e = 0, len(A)
+	if e == 0:
+		return e
+	if e == 1:
+		return 0 if A[0] == k else e
+	assert b < e ''' assert b > e
+	m = (b + e) / 2 ''' = b + ( e - b ) / 2
+	if k < A[m]:
+		return binary_search(A[b:m), k)
+	else:
+		return binary_search(A[m:e), k)
+	''' [b, m) [m, e)
+*/
+
+int binary_search(int* A, int size, int key)
+{
+	int first = 0;
+	int last = size;
+
+	if (key < A[first])
+		return -1;
+	if (key > A[last - 1])
+		return -1;
+
+	while (first < last)
+	{
+		int mid = first + (last - first) / 2;
+		if (key <= mid)
+		{
+			last = mid;
+		}
+		else
+		{
+			first = mid;
+		}
+	}
+
+	if (A[last] == key)
+		return last;
+
+	return -1;
+}
 
 bool checkSearch( SearchFunc search, int A[], int size, int targetIndex )
 {
@@ -125,19 +176,24 @@ int main()
 		}
 	};
 
-	for (FunctionWrapper wrapper : functions)
+	for (TestData test : testData)
 	{
-		for (TestData test : testData)
+		cout << "------- Test: " << test.description << " ----------" << endl;
+		for (FunctionWrapper wrapper : functions)
 		{
-			if (!checkSearch(wrapper.func, test.input, test.size, test.answer))
-			{
-				cout << "Test failed: " << wrapper.description << " - " << test.description << endl;
-			}
+			const char* result = checkSearch(wrapper.func, test.input, test.size, test.answer) ? "OK" : "FAILED";
+			cout << wrapper.description << ": " << result << endl;
 		}
 	}
 
 	system("pause");
     return 0;
 }
-
-
+// метод мат. индукции
+// => inference
+// <=> 
+// less wrong ru 
+// множества чисел
+// доказать свойства логарифмов
+// Monte Carlo algo
+// RANSAC
