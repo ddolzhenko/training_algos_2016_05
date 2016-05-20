@@ -13,7 +13,7 @@ using namespace std;
 
 typedef std::function<int(int*, int, int)> SearchFunc;
 
-int linear_sort(int* A, int size, int key)
+int linear_search(int* A, int size, int key)
 {
 	assert(size >= 0);
 	for (int i = 0; i < size; ++i)
@@ -25,7 +25,7 @@ int linear_sort(int* A, int size, int key)
 }
 
 
-int linear_sort_optimized(int* A, int size, int key)
+int linear_search_optimized(int* A, int size, int key)
 {
 	assert(size >= 0);
 	A[size] = key;
@@ -42,7 +42,7 @@ int linear_sort_optimized(int* A, int size, int key)
 	return i;
 }
 
-int linear_sort_tricky(int* A, int size, int key)
+int linear_search_tricky(int* A, int size, int key)
 {
 	assert(size >= 0);
 
@@ -73,9 +73,9 @@ int linear_sort_tricky(int* A, int size, int key)
 }
 
 
-bool checkSort( SearchFunc sort, int A[], int size, int targetIndex )
+bool checkSearch( SearchFunc search, int A[], int size, int targetIndex )
 {
-	return (targetIndex == sort(A, size, 1));
+	return (targetIndex == search(A, size, 1));
 }
 
 struct TestData
@@ -96,9 +96,9 @@ int main()
 {
 	std::vector<FunctionWrapper> functions =
 	{ 
-		{ linear_sort, "linear_sort"}, 
-		{ linear_sort_optimized, "linear_sort_optimized" },
-		{ linear_sort_tricky, "linear_sort_tricky" }
+		{ linear_search, "linear_search"}, 
+		{ linear_search_optimized, "linear_search_optimized" },
+		{ linear_search_tricky, "linear_search_tricky" }
 	};
 
 	std::vector<TestData> testData = {
@@ -129,7 +129,7 @@ int main()
 	{
 		for (TestData test : testData)
 		{
-			if (!checkSort(wrapper.func, test.input, test.size, test.answer))
+			if (!checkSearch(wrapper.func, test.input, test.size, test.answer))
 			{
 				cout << "Test failed: " << wrapper.description << " - " << test.description << endl;
 			}
