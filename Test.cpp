@@ -111,10 +111,8 @@ TIter binary_search_2(TIter begin, TIter end, T key)
 	size_t size = end - begin;
 	if (size == 0)
 		return end;
-	if (size == 1)
-		return (*begin) == key ? begin : end;
 
-	assert(size > 1);
+	assert(size > 0);
 
 	auto m = begin + (end - begin) / 2;
 
@@ -132,6 +130,41 @@ TIter binary_search_2(TIter begin, TIter end, T key)
 	else
 		return m;
 }
+
+template <class TIter, class T>
+TIter upper_bound(TIter begin, TIter end, T key)
+{
+	assert(std::is_sorted(begin, end));
+	while ( begin < end )
+	{
+		auto m = begin + (end - begin) / 2;
+		if (key < *m) 
+		{
+			end = m; // [begin, m)
+		}
+		else
+		{
+			begin = m + 1; // [m+1, end)
+		}
+	}
+	return begin;
+}
+
+// doesn't compile
+template <class TIter, class T>
+TIter binary_search_3(TIter begin, TIter end, T key)
+{
+	auto res = upper_bound<TIter, T>(begin, end, key);
+	if (res == end)
+		return end;
+	else
+	{
+		return *res == key ? res : end;
+	}
+}
+
+// implement lower-bound
+// implement tests for upper / lower bound
 
 ostream& operator<<( ostream& o, const vector<int>& v )
 {
@@ -199,7 +232,7 @@ void test_binary_search(TFunc bin_search)
 int main()
 {
 	//test_binary_search(binary_search_1<Vec::iterator, int>);
-	test_binary_search(binary_search_2<Vec::iterator, int>);
+	test_binary_search(binary_search_3<Vec::iterator, int>);
 	system("pause");
     return 0;
 }
