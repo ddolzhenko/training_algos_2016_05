@@ -8,68 +8,29 @@
 #include <functional>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 using namespace std;
+typedef vector<int> IntArray;
+typedef vector<int>::iterator IntArrayIter
 
-typedef std::function<int(int*, int, int)> SearchFunc;
+typedef std::function<int(IntArrayIter&, IntArrayIter&, int)> SearchFunc;
 
-int linear_search(int* A, int size, int key)
+int linear_search(IntArrayIter& begin, IntArrayIter& end, int key)
 {
-	assert(size >= 0);
-	for (int i = 0; i < size; ++i)
+	assert((end - begin) >= 0);
+    IntArrayIter it = begin;
+	for (it; it!=end; ++it)
 	{
-		if (A[i] == key)
-			return i;
+		if (*it == key)
+			break;
 	}
-	return -1;
+	return (it - begin);
 }
 
-
-int linear_search_optimized(int* A, int size, int key)
+int binary_search(IntArrayIter& begin, IntArrayIter& end, int key)
 {
-	assert(size >= 0);
-	A[size] = key;
-	int i = 0;
-
-	while (A[i] != key)
-	{
-		++i;
-	}
-
-	if (i == size)
-		return -1;
-
-	return i;
-}
-
-int linear_search_tricky(int* A, int size, int key)
-{
-	assert(size >= 0);
-
-	if (size == 0)
-		return -1;
-
-	int back = size - 1;
-
-	if (A[back] == key)
-		return back;
-
-	int lastElement = A[back];
-	A[back] = key;
-
-	int i = 0;
-
-	while (A[i] != key)
-	{
-		++i;
-	}
-
-	A[back] = lastElement;
-
-	if (i == back)
-		return -1;
-
-	return i;
+    assert( std::is_sorted(begin, end) );
 }
 
 /*
