@@ -4,21 +4,24 @@
 #include "stdafx.h"
 
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 #include <functional>
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <iomanip>
 
 using namespace std;
 typedef vector<int> IntArray;
-typedef vector<int>::iterator IntArrayIter
+typedef vector<int>::iterator IntArrayIter;
 
 typedef std::function<int(IntArrayIter&, IntArrayIter&, int)> SearchFunc;
 
 int linear_search(IntArrayIter& begin, IntArrayIter& end, int key)
 {
-	assert((end - begin) >= 0);
+	if ((end - begin) < 0)
+		throw std::exception("Invalid iterators");
+
     IntArrayIter it = begin;
 	for (it; it!=end; ++it)
 	{
@@ -30,9 +33,34 @@ int linear_search(IntArrayIter& begin, IntArrayIter& end, int key)
 
 int binary_search(IntArrayIter& begin, IntArrayIter& end, int key)
 {
-    assert( std::is_sorted(begin, end) );
+	if (!is_sorted(begin, end))
+		throw std::exception("Not sorted");
+
+	int len = end - begin;
+
+	if (len == 0)
+		return len;
+
+	if (*begin == key)
+		return 0;
+	else
+		return len;
+
+	assert(begin < end);
+
+	IntArrayIter mid = begin + (end - begin) / 2;
+
+	if (key < *mid)
+		return binary_search(begin, mid, key);
+	else
+		return binary_search(mid, end, key);
 }
 
+/*template <class T, class TFunct, class P1, class P2>
+T test(T expected, TFunct func, P1 p1, P2 p2)
+{
+	return 
+}*/
 /*
 // длина полуоткрытого интервала равна разности end - begin
 // единственным невалидным елементом, который можно вернуть - это конец полуоткрытого интервала
@@ -56,97 +84,71 @@ def bin_search(A, k):
 	''' [b, m) [m, e)
 */
 
-int binary_search(int* A, int size, int key)
+
+template <class TIter, class T>
+TIter binary_search_1(TIter begin, TIter end, T key)
 {
-	int first = 0;
-	int last = size;
-
-	if (key < A[first])
-		return -1;
-	if (key > A[last - 1])
-		return -1;
-
-	while (first < last)
+	assert(std::is_sorted(begin, end));
+	size_t size = end - begin;
+	if (size == 0)
+		return end;
+	if (size == 1)
+		return (*begin) == key ? begin : end;
+	auto m = begin + (end - begin) / 2;
+	if (key < *m)
 	{
-		int mid = first + (last - first) / 2;
-		if (key <= mid)
-		{
-			last = mid;
-		}
-		else
-		{
-			first = mid;
-		}
+		auto r = binary_search_1(begin, m, key);
+		return m == r ? end : r;
 	}
-
-	if (A[last] == key)
-		return last;
-
-	return -1;
+	else
+		return binary_search_1(m, end, key);
 }
 
-bool checkSearch( SearchFunc search, int A[], int size, int targetIndex )
+template<class T, class TFunc, class P1, class P2>
+void test(T expected, TFunc f, P1 p1, P2 p2)
 {
-	return (targetIndex == search(A, size, 1));
+	auto result = f(p1, p2);
+	if (expected != result)
+	{
+		cout << "Expected: " << expected << "; Result: " << result << endl;
+	}
+	else
+	{
+		cout << "OK!" << endl;
+	}
 }
+typedef vector<int> Vec;
 
-struct TestData
+template<class TFunc>
+void test_binary_search(TFunc bin_search)
 {
-	int input[10];
-	int size;
-	int answer;
-	std::string description;
-};
+	
+	int key = 42;
+	auto adaptor = [bin_search](Vec& v, int key)
+	{
+		auto result = bin_search(v.begin(), v.end(), key);
+		return (result == v.end()) ? -1 : (result - v.begin());
+	};
 
-struct FunctionWrapper
-{
-	SearchFunc func;
-	std::string description;
-};
+	test(-1, adaptor, Vec({}), key);
+	test(0, adaptor, Vec({ 42 }), key);
+	test(-1, adaptor, Vec({ 43 }), key);
+	test(0, adaptor, Vec({ 42, 43 }), key);
+	test(1, adaptor, Vec({ 41, 42 }), key);
+	test(-1, adaptor, Vec({ 41, 43 }), key);
+	test(-1, adaptor, Vec({1,2,3,4}), key);
+
+	test(2, adaptor, Vec({ 1, 2, 5, 42 }), key);
+	test(2, adaptor, Vec({ 3, 5, 42, 45, 67 }), key);
+	test(3, adaptor, Vec({ 3, 5, 41, 42, 45, 67 }), key);
+	test(3, adaptor, Vec({ 3, 5, 41, 42 }), key);
+	test(3, adaptor, Vec({ 3, 5, 41, 42, 43, 44, 45 }), key);
+
+}
 
 int main()
 {
-	std::vector<FunctionWrapper> functions =
-	{ 
-		{ linear_search, "linear_search"}, 
-		{ linear_search_optimized, "linear_search_optimized" },
-		{ linear_search_tricky, "linear_search_tricky" }
-	};
-
-	std::vector<TestData> testData = {
-		{
-			{}, 0, -1, "Trivial empty"
-		},
-		{
-			{2}, 1, -1, "Trivial one element, no key"
-		},
-		{
-			{1}, 1, 0, "Trivial one element, key exists"
-		},
-		{
-			{1, 2}, 2, 0, "Two elements, has key"
-		},
-		{
-			{ 3, 4 }, 2, -1, "Two elements, no key"
-		},
-		{
-			{ 3, 8, 1, 10 }, 4, 2, "Four elements, has key"
-		},
-		{
-			{ 3, 8, 2, 10 }, 4, -1, "Four elements, has key"
-		}
-	};
-
-	for (TestData test : testData)
-	{
-		cout << "------- Test: " << test.description << " ----------" << endl;
-		for (FunctionWrapper wrapper : functions)
-		{
-			const char* result = checkSearch(wrapper.func, test.input, test.size, test.answer) ? "OK" : "FAILED";
-			cout << wrapper.description << ": " << result << endl;
-		}
-	}
-
+	test_binary_search(binary_search_1<Vec::iterator, int>);
 	system("pause");
     return 0;
 }
@@ -158,3 +160,92 @@ int main()
 // доказать свойства логарифмов
 // Monte Carlo algo
 // RANSAC
+
+
+/*bool checkSearch( SearchFunc search, IntArray& A, int targetIndex )
+{
+return (targetIndex == search(A.begin(), A.end(), 42));
+}
+
+struct TestData
+{
+IntArray input;
+int answer;
+std::string description;
+};
+
+struct FunctionWrapper
+{
+SearchFunc func;
+std::string description;
+};
+
+int main()
+{
+std::vector<FunctionWrapper> functions =
+{
+{ linear_search, "linear_search"},
+{ binary_search, "binary_search" }
+};
+
+std::vector<TestData> testData = {
+{
+{}, 0, "{}"
+},
+{
+{2}, 1, "{2}"
+},
+{
+{42}, 0, "{42}"
+},
+{
+{1, 2, 4}, 3, "{1, 2, 4}"
+},
+{
+{ 42, 43 }, 0, "{ 42, 43 }"
+},
+{
+{ 3, 4 }, 2, "{ 3, 4 }"
+},
+{
+{ 1, 2, 3, 5, 41 }, 5, "{ 1, 2, 3, 5, 41 }"
+},
+{
+{ 43, 45, 67, 100 }, 4, "{ 43, 45, 67, 100 }"
+},
+{
+{ 3, 5,41,43,45,67 }, 6, "{ 3, 5,41,43,45,67 }"
+},
+{
+{ 1, 2, 5, 42 }, 3, "{ 1, 2, 5, 42 }"
+},
+{
+{ 42, 45, 67, 100 }, 0, "{ 42, 45, 67, 100 }"
+},
+{
+{ 3, 5, 41, 42 }, 3, "{ 3, 5, 41, 42 }"
+},
+{
+{ 3, 5, 41, 42, 45, 67 }, 3, "{ 3, 5, 41, 42, 45, 67 }"
+},
+{
+{ 3, 5, 42, 45, 67 }, 2, "{ 3, 5, 42, 45, 67 }"
+}
+};
+
+for (TestData test : testData)
+{
+cout << "------- Test: " << test.description << " ----------" << endl;
+for (FunctionWrapper wrapper : functions)
+{
+//const char* result = "EXCEPTION";
+bool result = checkSearch(wrapper.func, test.input, test.answer);
+cout << "Test " << wrapper.description << ": " << ((result) ? "OK" : "FAILED") << endl;
+if (!result)
+{
+cout << "Expected: " << test.answer << ";" << "Given: " << wrapper.func(test.input.begin(), test.input.end(), 42) << endl;
+goto end;
+}
+}
+}
+end:*/
