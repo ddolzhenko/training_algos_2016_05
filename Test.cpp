@@ -104,19 +104,35 @@ TIter binary_search_1(TIter begin, TIter end, T key)
 		return binary_search_1(m, end, key);
 }
 
+ostream& operator<<( ostream& o, const vector<int>& v )
+{
+	o << "{";
+	for (auto x : v)
+	{
+		o << x << ", ";
+	}
+	o << "}";
+	return o;
+}
+
 template<class T, class TFunc, class P1, class P2>
 void test(T expected, TFunc f, P1 p1, P2 p2)
 {
 	auto result = f(p1, p2);
+	cout << "---------------------------------------------------------------------" << endl;
+	cout << "f(" << p1 << ", " << p2 << ") = " << result << endl;
+
 	if (expected != result)
 	{
 		cout << "Expected: " << expected << "; Result: " << result << endl;
+		system("pause");
 	}
 	else
 	{
 		cout << "OK!" << endl;
 	}
 }
+
 typedef vector<int> Vec;
 
 template<class TFunc>
@@ -138,7 +154,7 @@ void test_binary_search(TFunc bin_search)
 	test(-1, adaptor, Vec({ 41, 43 }), key);
 	test(-1, adaptor, Vec({1,2,3,4}), key);
 
-	test(2, adaptor, Vec({ 1, 2, 5, 42 }), key);
+	test(3, adaptor, Vec({ 1, 2, 5, 42 }), key);
 	test(2, adaptor, Vec({ 3, 5, 42, 45, 67 }), key);
 	test(3, adaptor, Vec({ 3, 5, 41, 42, 45, 67 }), key);
 	test(3, adaptor, Vec({ 3, 5, 41, 42 }), key);
