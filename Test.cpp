@@ -104,6 +104,35 @@ TIter binary_search_1(TIter begin, TIter end, T key)
 		return binary_search_1(m, end, key);
 }
 
+template <class TIter, class T>
+TIter binary_search_2(TIter begin, TIter end, T key)
+{
+	assert(std::is_sorted(begin, end));
+	size_t size = end - begin;
+	if (size == 0)
+		return end;
+	if (size == 1)
+		return (*begin) == key ? begin : end;
+
+	assert(size > 1);
+
+	auto m = begin + (end - begin) / 2;
+
+	//[begin, m) [m] (m end )
+
+	//if (*m == key)
+	//	return m;
+	if (key < *m) // [begin, m)
+	{
+		auto r = binary_search_2(begin, m, key);
+		return m == r ? end : r;
+	}
+	else if (*m < key)
+		return binary_search_2(m+1, end, key);
+	else
+		return m;
+}
+
 ostream& operator<<( ostream& o, const vector<int>& v )
 {
 	o << "{";
@@ -160,11 +189,17 @@ void test_binary_search(TFunc bin_search)
 	test(3, adaptor, Vec({ 3, 5, 41, 42 }), key);
 	test(3, adaptor, Vec({ 3, 5, 41, 42, 43, 44, 45 }), key);
 
+	// more than one key
+	test(1, adaptor, Vec({ key, key }), key);
+	//test(3, adaptor, Vec({ 1,2,key, key }), key);
+	test(1, adaptor, Vec({ key, key, key+1, key+10 }), key);
+	test(4, adaptor, Vec({ 1,2,3, key, key }), key);
 }
 
 int main()
 {
-	test_binary_search(binary_search_1<Vec::iterator, int>);
+	//test_binary_search(binary_search_1<Vec::iterator, int>);
+	test_binary_search(binary_search_2<Vec::iterator, int>);
 	system("pause");
     return 0;
 }
