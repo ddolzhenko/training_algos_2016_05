@@ -4,7 +4,7 @@
 		{
 			"name": "Build",
 			"selector": "source.c++",
-   			"cmd": ["g++", "-std=c++0x", "-o", "$file_base_name.exe", "$file_name"],
+   			"cmd": ["g++", "-std=c++14", "-o", "$file_base_name.exe", "$file_name"],
    			"file_regex": "^(..*):([0-9]+):([0-9]*): (error|note).*",
    
 			"variants":
@@ -13,8 +13,15 @@
 					"name": "Run",
 					"working_dir": ".",
 					"cmd": ["$file_base_name.exe"]
-				}
+				},	
 
+				{
+					"name": "Build && Run",
+					"working_dir": ".",
+   					"cmd": ["g++", "-std=c++14", "-o", "$file_base_name.exe", "$file_name", "&&", "$file_base_name.exe"],
+					"shell": true,
+   					"file_regex": "^(..*):([0-9]+):([0-9]*): (error|note).*",
+   				},
 			]
 		}
 	],
