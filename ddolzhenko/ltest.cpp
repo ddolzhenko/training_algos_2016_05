@@ -17,13 +17,9 @@ struct Run
 
 std::ostream& operator<<(std::ostream& o, const Run& run)
 {
-    o   << run.expected << "\n    " 
-        << std::setw(80) << std::setfill('.') << std::left << run.recieved;
-    if (run.failed)
-        o << "FAILED";
-    else
-        o << "OK";
-    return o;
+    return o    << run.expected << "\n    " 
+                << std::setw(80) << std::setfill('.') << std::left << run.recieved
+                << (run.failed ? "FAILED" : "OK");
 };
 
 class RunInfo
