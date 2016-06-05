@@ -25,7 +25,9 @@ std::ostream& operator<<(std::ostream& o, const Run& run)
 class RunInfo
 {
 public:
+    RunInfo(string test_name):m_test_name(test_name) {}
 
+    std::string m_test_name;
     std::vector<Run> db;
 
     template <class T1, class T2>
@@ -42,55 +44,57 @@ public:
     }
 };
 
-class TestSuite
+class TestContext
 {
 public:
-    // TestSuite();
-    
-
     typedef std::string Name;
-    typedef std::function<void (TestSuite&, RunInfo&)> TestFunction;
+    typedef std::function<void (TestContext&, RunInfo&)> TestFunction;
     typedef std::map<Name, TestFunction> Tests;
+
+public:
+    TestContext(Name name): m_name(name) 
+    {
+        if(verbose) 
+            std::cout << m_name << std::endl;
+    }
+
+    void run(Name basename="")
+    {
+        for(const auto& test : m_tests)
+        {
+            TestContext context(basename + test.first);
+            
+            RunInfo info(context.m_name);
+            test.second(context, info);
+            // results[fullname] = info;
+
+            
+            context.run(context.m_name + "::");
+        }
+    }
 
     void add(Name name, TestFunction test)
     {
         m_tests[name] = test;
     }
 
-  
-
-    void run(std::string basename="")
-    {
-        for(const auto& test : m_tests)
-        {
-            std::string fullname = basename + test.first;
-            TestSuite internal_suite;
-            std::cout << fullname << std::endl;
-            
-            RunInfo info;
-            test.second(internal_suite, info);
-            results[fullname] = info;
-
-            
-            internal_suite.run(test.first + "::");
-        }
-    }
-
-
+private:
+    static const bool verbose = true;
+    Name  m_name;
     Tests m_tests;
     std::map<std::string, RunInfo> results;
 };
 
-TestSuite __ltests;
+TestContext ltest_context__("root");
 
 using namespace std;
 
 struct Wrapper
 {
-    typedef TestSuite::TestFunction TestFunction;
+    typedef TestContext::TestFunction TestFunction;
     typedef std::string TestName;
     
-    Wrapper(string name, TestSuite* suite, TestFunction test=TestFunction())
+    Wrapper(string name, TestContext* suite, TestFunction test=TestFunction())
     : m_name(name)
     , m_suite(suite) 
     , m_test(test)
@@ -103,7 +107,7 @@ struct Wrapper
     }
 
     TestName        m_name;
-    TestSuite*      m_suite;
+    TestContext*      m_suite;
     TestFunction    m_test;
 };
 
@@ -116,19 +120,13 @@ struct Registrator
     }
 };
 
-
-// #define STR(x) #x
-// #define CAT(x, y) x ## y
-// #define TEST_FUNC_NAME(name) STR(CAT(test_, name))
-
-#define EXPECT_EQ(expr1, expr2) __info.__expect_eq(#expr1, #expr2, expr1, expr2)
+#define EXPECT_EQ(expr1, expr2) info__.__expect_eq(#expr1, #expr2, expr1, expr2)
 
 
 #define ITEST(test_name) \
     Registrator ltest_ ## test_name = \
-        Wrapper(#test_name, &__ltests) + \
-        [](TestSuite& __ltests, RunInfo& __info)
-
+        Wrapper(#test_name,  &ltest_context__) + \
+        [=](TestContext& ltest_context__, RunInfo& info__)
 
 
 int foo(int x)
@@ -143,6 +141,8 @@ ITEST(foo) {
 
     EXPECT_EQ(1, 1);
 
+    auto foo = [](int x) { return x * x; };
+    
     ITEST(degenarated) {
         EXPECT_EQ(0, foo(0));
     };
@@ -172,28 +172,16 @@ ITEST(foo) {
             EXPECT_EQ(25, foo(-5));  
         };
     };
+
+
+
 };
 
-
-////////////////////////////////////////////////////////////////////////////////////////
-// Registrator ltest_foo = 
-//     Wrapper("foo") + __ltests +
-//     [](TestSuite& __ltests, RunInfo& __info)
-// {
-//     __info.__expect_eq("1", "1", 1, 1);
-
-
-//     Registrator ltest_degenerated = Wrapper("degenarated", __ltests) +
-//         [](TestSuite& __ltests, RunInfo& __info)
-//     {
-//         __info.__expect_eq("0", "foo(0)", 0, foo(0));
-//     };
-// };
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
 int main()
 {
-    __ltests.run();
+    ltest_context__.run();
     return 0;
 }
