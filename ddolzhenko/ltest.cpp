@@ -82,7 +82,7 @@ public:
     std::map<std::string, RunInfo> results;
 };
 
-TestSuite globalTests;
+TestSuite __ltests;
 
 using namespace std;
 
@@ -91,15 +91,19 @@ struct Wrapper
     typedef TestSuite::TestFunction TestFunction;
     typedef std::string TestName;
     
-    Wrapper(string name, TestFunction test=TestFunction())
-    : m_name(name), m_test(test) {}
+    Wrapper(string name, TestSuite* suite, TestFunction test=TestFunction())
+    : m_name(name)
+    , m_suite(suite) 
+    , m_test(test)
+    {}
     
     Wrapper operator+(TestFunction test)
     {
-        return Wrapper(m_name, test);
+        return Wrapper(m_name, m_suite, test);
     }
 
     TestName        m_name;
+    TestSuite*      m_suite;
     TestFunction    m_test;
 };
 
@@ -108,7 +112,7 @@ struct Registrator
 {
     Registrator(const Wrapper& w)
     {
-        globalTests.add(w.m_name, w.m_test);
+        w.m_suite->add(w.m_name, w.m_test);
     }
 };
 
@@ -117,19 +121,14 @@ struct Registrator
 // #define CAT(x, y) x ## y
 // #define TEST_FUNC_NAME(name) STR(CAT(test_, name))
 
-
-#define ITEST(test_name) \
-    Registrator ltest_ ## test_name = \
-        Wrapper(#test_name) + \
-        [](TestSuite& __ltests, RunInfo& __info)
-
-// #define ITEST(test_name) \
-//     TestSuite::TestFunction TEST_FUNC_NAME(test_name) = 
-// __ltests(#test_name) = [](TestSuite& __ltests, RunInfo& __info)
-
 #define EXPECT_EQ(expr1, expr2) __info.__expect_eq(#expr1, #expr2, expr1, expr2)
 
 
+
+#define ITEST(test_name) \
+    Registrator ltest_ ## test_name = \
+        Wrapper(#test_name, &__ltests) + \
+        [](TestSuite& __ltests, RunInfo& __info)
 
 
 
@@ -152,8 +151,25 @@ ITEST(foo) {
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////
+// Registrator ltest_foo = 
+//     Wrapper("foo") + __ltests +
+//     [](TestSuite& __ltests, RunInfo& __info)
+// {
+//     __info.__expect_eq("1", "1", 1, 1);
+
+
+//     Registrator ltest_degenerated = Wrapper("degenarated", __ltests) +
+//         [](TestSuite& __ltests, RunInfo& __info)
+//     {
+//         __info.__expect_eq("0", "foo(0)", 0, foo(0));
+//     };
+// };
+
+////////////////////////////////////////////////////////////////////////////////////////
+
 int main()
 {
-    globalTests.run();
+    __ltests.run();
     return 0;
 }
