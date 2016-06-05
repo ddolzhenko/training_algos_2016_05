@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <map>
 #include <functional>
@@ -9,18 +10,19 @@ using namespace std;
 
 struct Run
 {
-    std::string what;
+    std::string expected;
+    std::string recieved;
     bool failed;
-
 };
 
 std::ostream& operator<<(std::ostream& o, const Run& run)
 {
-    if(run.failed)
-        o << "FAILED: " << run.what;
+    o   << run.expected << "\n    " 
+        << std::setw(80) << std::setfill('.') << std::left << run.recieved;
+    if (run.failed)
+        o << "FAILED";
     else
-        o << "OK: " << run.what;
-
+        o << "OK";
     return o;
 };
 
@@ -34,7 +36,8 @@ public:
     void __expect_eq(string line1, string line2, const T1& e1, const T2& e2)
     {
         Run run;
-        run.what = "expect: " + line1 + " == " + line2;
+        run.expected = "expected: " + line1 + " == " + line2;
+        run.recieved = "recieved: " + std::to_string(e1) + " == " + std::to_string(e2);
         run.failed = !(e1 == e2);
 
         std::cout << "    " << run << std::endl;
@@ -66,7 +69,7 @@ public:
         {
             std::string fullname = basename + test.first;
             TestSuite internal_suite;
-            std::cout << "testing: " << fullname << std::endl;
+            std::cout << fullname << std::endl;
             
             RunInfo info;
             test.second(internal_suite, info);
@@ -96,6 +99,7 @@ struct Wrapper
     , m_suite(suite) 
     , m_test(test)
     {}
+
     
     Wrapper operator+(TestFunction test)
     {
@@ -124,7 +128,6 @@ struct Registrator
 #define EXPECT_EQ(expr1, expr2) __info.__expect_eq(#expr1, #expr2, expr1, expr2)
 
 
-
 #define ITEST(test_name) \
     Registrator ltest_ ## test_name = \
         Wrapper(#test_name, &__ltests) + \
@@ -134,6 +137,8 @@ struct Registrator
 
 int foo(int x)
 {
+    if (x == 3)
+        return 3;
     return x*x;
 }
 
@@ -147,6 +152,29 @@ ITEST(foo) {
     };
     ITEST(trivial) {
         EXPECT_EQ(1, foo(1));
+    };
+        
+    ITEST(even) {
+        ITEST(positive) {
+            EXPECT_EQ(4, foo(2));  
+            EXPECT_EQ(16, foo(4));  
+        };
+        ITEST(negative) {
+            EXPECT_EQ(4, foo(-2));  
+            EXPECT_EQ(16, foo(-4));  
+        };
+    };
+
+
+    ITEST(odd) {
+        ITEST(positive) {
+            EXPECT_EQ(9, foo(3));  
+            EXPECT_EQ(25, foo(5));  
+        };
+        ITEST(negative) {
+            EXPECT_EQ(9, foo(-3));  
+            EXPECT_EQ(25, foo(-5));  
+        };
     };
 };
 
