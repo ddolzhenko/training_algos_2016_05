@@ -40,7 +40,7 @@ public:
     {
         Run run;
         run.expected = "expected: " + line1 + " == " + line2;
-        run.recieved = "recieved: " + std::to_string(e1) + " == " + std::to_string(e2);
+        // run.recieved = "recieved: " + std::to_string(e1) + " == " + std::to_string(e2);
         run.failed = !(e1 == e2);
 
         std::cout << "    " << run << std::endl;

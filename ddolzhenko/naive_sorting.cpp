@@ -138,7 +138,42 @@ void sort_bubble(TIter b, TIter e)
 
 
 
+template <class TIter>
+void merge(TIter b1, TIter e1, TIter b2, TIter e2, TIter out) {
+    TIter i1 = b1; TIter i2 = b2;
+    // [b1, i1) [i1 e1)
+    // [b2, i2) [i2 e2)
+    // [..., out) [out] (out, ...)
+    TIter b_out = out;
+    while(i1 < e1 && i2 < e2) {
+        assert(is_sorted(b_out, out));
+        assert((i1-b1) + (i2-b2) == (out-b_out));
+        if(*i1 < *i2)
+            *out = *i1++;
+        else
+            *out = *i2++;
 
+        assert(is_sorted(b_out, out));
+        out++;
+    }
+
+    out = copy(i1, e1, out);
+    out = copy(i2, e2, out);
+    assert(is_sorted(b_out, out));
+    assert((out-b_out) == (e1-b1) + (e2-b2));
+}
+
+
+template <class TIter>
+void merge_sort(TIter b, TIter e, TIter out)
+{
+    if(e-b > 1) {
+        TIter m = b + (e-b)/2;
+        merge_sort(b, m, out);
+        merge_sort(m, e, out);
+        merge(b, m, m, e, out);
+    }
+}
 
 
 
