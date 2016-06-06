@@ -56,10 +56,21 @@ public:
     typedef std::function<void (TestContext&, RunInfo&)> TestFunction;
     typedef std::map<Name, TestFunction> Tests;
 
+    typedef std::function<void(void)> PrepareFunction;
+
+    PrepareFunction m_before;
+    PrepareFunction m_after;
+
+    bool m_global;
 public:
-    TestContext(Name name): m_name(name) 
+    TestContext(Name name, bool global=false)
+    : m_name(name)
+    , m_global(global)
     {
-        if(verbose) 
+        m_before = [](){};
+        m_after  = [](){};
+
+        if(!m_global && verbose) 
             std::cout << m_name << std::endl;
     }
 
@@ -67,20 +78,32 @@ public:
     {
         for(const auto& test : m_tests)
         {
-            TestContext context(basename + test.first);
-            
-            RunInfo info(context.m_name);
-            test.second(context, info);
-            // results[fullname] = info;
-
-            
-            context.run(context.m_name + "::");
+            run_test(test.first, test.second, basename);
         }
     }
 
     void add(Name name, TestFunction test)
     {
         m_tests[name] = test;
+
+        if(!m_global)
+        {
+            run_test(name, test, m_name+".");
+        }
+    }
+
+
+    void run_test(Name name, TestFunction test, Name basename)
+    {
+        m_before();
+        
+        TestContext context(basename + name);
+        RunInfo info(context.m_name);
+        test(context, info);
+        // results[fullname] = info;
+        m_after();
+        
+        // context.run(context.m_name + ".");
     }
 
 private:
@@ -90,7 +113,7 @@ private:
     std::map<std::string, RunInfo> results;
 };
 
-TestContext ltest_context__("root");
+TestContext ltest_context__("root", true);
 
 using namespace std;
 
@@ -131,15 +154,18 @@ struct Registrator
 #define LTEST(test_name) \
     Registrator ltest_ ## test_name = \
         Wrapper(#test_name,  &ltest_context__) + \
-        [=](TestContext& ltest_context__, RunInfo& info__)
+        [&](TestContext& ltest_context__, RunInfo& info__)
+
+#define LBEFORE ltest_context__.m_before = [&]()
+#define LAFTER  ltest_context__.m_after  = [&]()
 
 
-int foo(int x)
-{
-    if (x == 3)
-        return 3;
-    return x*x;
-}
+// int foo(int x)
+// {
+//     if (x == 3)
+//         return 3;
+//     return x*x;
+// }
 
 
 // LTEST(foo) {
