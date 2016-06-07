@@ -156,15 +156,10 @@ struct Registrator
 #define EXPECT_GE(expr1, expr2) EXPECT_TRUE((expr1) >= (expr2))
 
 // Complex
-template <class T> std::set<T> set(const std::initializer_list<T>& list) {
-    return std::set<T>(list);
-}
 template <class T1, class T2>
-bool in(const std::set<T1>& s, const T2& x) {
-    return s.find(x) != s.end();
+bool in(const std::initializer_list<T1>& s, const T2& x) {
+    return std::find(s.begin(), s.end(), x) != s.end();
 }
-#define EXPECT_IN(set, expr)    EXPECT_TRUE(ltest::in(set, expr))
-
 ////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace ltest

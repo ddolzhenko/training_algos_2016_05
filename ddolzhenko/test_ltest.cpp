@@ -24,14 +24,16 @@ int foo(int x)
 
 LTEST(foo) {
 
+    using namespace ltest;
+
     EXPECT_TRUE(2==2);
     EXPECT_FALSE(2==3);
 
     EXPECT_TRUE(2==2);
     EXPECT_LT(2, 2);
 
-    EXPECT_IN(ltest::set({1, 2}), 42);
-    EXPECT_IN(ltest::set({1, 2}), 2);
+    EXPECT_TRUE(in({1, 2} , 42));
+    EXPECT_TRUE(in({1, 2} , 2));
 
     EXPECT_EQ(1, 1);
 
