@@ -3,6 +3,7 @@
 // + all macroses
 // + __file__ ___line__
 // + setup/teardown  anyway
+// - print calculated values (if possible)
 // - statistics
 // - context:     CONTEXT(sort, {selection_sort, naive_sort})
 // - select tests to run test_context__.run("search.*")
@@ -34,7 +35,7 @@ LTEST(foo) {
 
     EXPECT_EQ(1, 1);
 
-    auto foo = [](int x) { return x * x; };
+    // auto foo = [](int x) { return x * x; };
     
     LTEST(degenarated) {
         EXPECT_EQ(0, foo(0));
