@@ -4,6 +4,7 @@
 #include <map>
 #include <functional>
 #include <string>
+#include <set>
 
 
 #include <iostream>
@@ -11,21 +12,30 @@
 #include <cassert>
 #include <algorithm>
 
+#include <utility>
+
 using namespace std;
+
+namespace ltest {
 
 struct Run
 {
-    std::string expected;
-    std::string recieved;
-    bool failed;
+    const char* expected;
+    const char* recieved;
+    const char* file;
+    const int line;
+    const bool ok;
 };
 
 std::ostream& operator<<(std::ostream& o, const Run& run)
 {
-    return o    << run.expected << "\n    " 
-                << std::setw(80) << std::setfill('.') << std::left << run.recieved
-                << (run.failed ? "FAILED" : "OK");
+    const char tab[] = "    ";
+    return o    << run.file << ":" << run.line << ":: " 
+                << (run.ok ? "ok" : "failed") << ": "
+                << tab << run.expected << std::endl;
+                // << tab << run.recieved << std::endl;
 };
+
 
 class RunInfo
 {
@@ -35,13 +45,22 @@ public:
     std::string m_test_name;
     std::vector<Run> db;
 
+    void expect_true(const char* file, int line, const char* expected, bool ok)
+    {
+        Run run = {expected, ok ? "true" : "false", file, line, ok};
+        db.push_back(run);
+        if(!ok) cout << run;
+    }
+
+
+
     template <class T1, class T2>
     void __expect_eq(string line1, string line2, const T1& e1, const T2& e2)
     {
         Run run;
         run.expected = "expected: " + line1 + " == " + line2;
         // run.recieved = "recieved: " + std::to_string(e1) + " == " + std::to_string(e2);
-        run.failed = !(e1 == e2);
+        run.ok = (e1 == e2);
 
         std::cout << "    " << run << std::endl;
 
@@ -70,8 +89,7 @@ public:
         m_before = [](){};
         m_after  = [](){};
 
-        if(!m_global && verbose) 
-            std::cout << m_name << std::endl;
+        // if(!m_global && verbose) std::cout << m_name << std::endl;
     }
 
     void run(Name basename="")
@@ -113,7 +131,6 @@ private:
     std::map<std::string, RunInfo> results;
 };
 
-TestContext ltest_context__("root", true);
 
 using namespace std;
 
@@ -148,66 +165,48 @@ struct Registrator
     }
 };
 
-#define EXPECT_EQ(expr1, expr2) info__.__expect_eq(#expr1, #expr2, expr1, expr2)
+
 
 
 #define LTEST(test_name) \
-    Registrator ltest_ ## test_name = \
-        Wrapper(#test_name,  &ltest_context__) + \
-        [&](TestContext& ltest_context__, RunInfo& info__)
+    ltest::Registrator ltest_ ## test_name = \
+        ltest::Wrapper(#test_name,  &ltest_context__) + \
+        [&](ltest::TestContext& ltest_context__, ltest::RunInfo& info__)
+
 
 #define LBEFORE ltest_context__.m_before = [&]()
 #define LAFTER  ltest_context__.m_after  = [&]()
 
 
-// int foo(int x)
-// {
-//     if (x == 3)
-//         return 3;
-//     return x*x;
-// }
+// Unary
+#define EXPECT_TRUE(expr)       info__.expect_true(__FILE__, __LINE__, #expr, expr)
+#define EXPECT_FALSE(expr)      EXPECT_TRUE(!(expr))
 
+// Binary
+#define EXPECT_EQ(expr1, expr2) EXPECT_TRUE((expr1) == (expr2))
+#define EXPECT_NE(expr1, expr2) EXPECT_TRUE((expr1) != (expr2))
+#define EXPECT_LT(expr1, expr2) EXPECT_TRUE((expr1) < (expr2))
+#define EXPECT_LE(expr1, expr2) EXPECT_TRUE((expr1) <= (expr2))
+#define EXPECT_GT(expr1, expr2) EXPECT_TRUE((expr1) > (expr2))
+#define EXPECT_GE(expr1, expr2) EXPECT_TRUE((expr1) >= (expr2))
 
-// LTEST(foo) {
+// Complex
+template <class T> std::set<T> set(const std::initializer_list<T>& list) {
+    return std::set<T>(list);
+}
+template <class T1, class T2>
+bool in(const std::set<T1>& s, const T2& x) {
+    return s.find(x) != s.end();
+}
+#define EXPECT_IN(set, expr)    EXPECT_TRUE(ltest::in(set, expr))
 
-//     EXPECT_EQ(1, 1);
+////////////////////////////////////////////////////////////////////////////////////////
 
-//     auto foo = [](int x) { return x * x; };
-    
-//     LTEST(degenarated) {
-//         EXPECT_EQ(0, foo(0));
-//     };
-//     LTEST(trivial) {
-//         EXPECT_EQ(1, foo(1));
-//     };
-        
-//     LTEST(even) {
-//         LTEST(positive) {
-//             EXPECT_EQ(4, foo(2));  
-//             EXPECT_EQ(16, foo(4));  
-//         };
-//         LTEST(negative) {
-//             EXPECT_EQ(4, foo(-2));  
-//             EXPECT_EQ(16, foo(-4));  
-//         };
-//     };
+} // namespace ltest
 
+////////////////////////////////////////////////////////////////////////////////////////
 
-//     LTEST(odd) {
-//         LTEST(positive) {
-//             EXPECT_EQ(9, foo(3));  
-//             EXPECT_EQ(25, foo(5));  
-//         };
-//         LTEST(negative) {
-//             EXPECT_EQ(9, foo(-3));  
-//             EXPECT_EQ(25, foo(-5));  
-//         };
-//     };
-
-
-
-// };
-
+ltest::TestContext ltest_context__("root", true);
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
