@@ -13,12 +13,27 @@
 namespace ltest {
 
     class TestContext;
-    class RunInfo;
+    
 
     typedef std::string Name;
-    typedef std::function<void (TestContext&, RunInfo&)>    TestFunction;
-    typedef std::function<void(void)>                       PrepareFunction;
+    typedef std::function<void (TestContext&)>    TestFunction;
+    typedef std::function<void(void)>             PrepareFunction;
     typedef std::map<Name, TestFunction> Tests;
+
+    struct TestSettings
+    {
+        TestSettings(Name name, TestContext* suite): m_name(name), m_context(suite) {}
+        
+        TestSettings& operator<<(TestFunction test) {
+            m_test = test;
+            return *this;
+        }
+
+        Name            m_name;
+        TestContext*    m_context;
+        TestFunction    m_test;
+    };
+
 
     struct Run
     {
@@ -39,28 +54,16 @@ namespace ltest {
     };
 
 
-class RunInfo
-{
-public:
-    RunInfo(Name test_name):m_test_name(test_name) {}
-
-    Name m_test_name;
-    std::vector<Run> db;
-
-    void expect_true(const char* file, int line, const char* expected, bool ok)
-    {
-        Run run = {expected, ok ? "true" : "false", file, line, ok};
-        db.push_back(run);
-        if(!ok) std::cout << run;
-    }
-  
-};
-
 class TestContext
 {
 public:
+    static const bool verbose = true;
+    
     PrepareFunction m_before;
     PrepareFunction m_after;
+
+    Name  m_name;
+    Tests m_tests;
 
     bool m_global;
 
@@ -99,37 +102,25 @@ public:
         m_before();
         
         TestContext context(basename + name);
-        RunInfo info(context.m_name);
-        test(context, info);
+        test(context);
         // results[fullname] = info;
         m_after();
         
         // context.run(context.m_name + ".");
     }
 
-private:
-    static const bool verbose = true;
-    Name  m_name;
-    Tests m_tests;
-    std::map<std::string, RunInfo> results;
-};
-
-
-using namespace std;
-
-struct TestSettings
-{
-    TestSettings(Name name, TestContext* suite): m_name(name), m_context(suite) {}
-    
-    TestSettings& operator<<(TestFunction test) {
-        m_test = test;
-        return *this;
+public: // outcomes
+    void expect_true(const char* file, int line, const char* expected, bool ok)
+    {
+        Run run = {expected, ok ? "true" : "false", file, line, ok};
+        // db.push_back(run);
+        if(!ok) std::cout << run;
     }
 
-    Name            m_name;
-    TestContext*    m_context;
-    TestFunction    m_test;
+private:
+   
 };
+
 
 
 struct Registrator
@@ -145,7 +136,7 @@ struct Registrator
 #define LTEST(test_name) \
     ltest::Registrator ltest_ ## test_name = \
         ltest::TestSettings(#test_name,  &ltest_context__) << \
-        [&](ltest::TestContext& ltest_context__, ltest::RunInfo& info__)
+        [&](ltest::TestContext& ltest_context__)
 
 
 #define LBEFORE ltest_context__.m_before = [&]()
@@ -153,7 +144,7 @@ struct Registrator
 
 
 // Unary
-#define EXPECT_TRUE(expr)       info__.expect_true(__FILE__, __LINE__, #expr, expr)
+#define EXPECT_TRUE(expr)       ltest_context__.expect_true(__FILE__, __LINE__, #expr, expr)
 #define EXPECT_FALSE(expr)      EXPECT_TRUE(!(expr))
 
 // Binary
