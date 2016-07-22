@@ -263,7 +263,7 @@ void quick_sort(TIter b, TIter e)
 template <typename T>
 void counting_sort(std::vector<T>& v)
 {
-    size_t counters_size = sizeof(T)*CHAR_BIT;
+    size_t counters_size = sizeof(T) << CHAR_BIT;
     size_t counters[counters_size] = { 0 };
     
     for(const auto& x : v)
