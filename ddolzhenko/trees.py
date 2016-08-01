@@ -83,9 +83,11 @@ class Tree:
         self.left = left
         self.right = right
 
+    # def height(tree):
+    #     if tree == null_tree:
+    #         return 0
+    #     return 1 + max(height(tree.left), height(tree.right))
 
-    def height(self):
-        return ???
 
     def __str__(self):
         return str(self.data)
@@ -128,6 +130,13 @@ class Tree:
         print(positions)
 
         self.to_graph().draw(positions)
+
+null_tree = Tree(None)
+
+def height(tree):
+    if not tree:
+        return 0
+    return 1 + max(height(tree.left), height(tree.right))
 
 
 def dfs_1(tree):
