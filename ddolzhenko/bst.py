@@ -1,3 +1,7 @@
+import networkx as nx
+import math
+from random import shuffle
+import matplotlib.pyplot as plt
     
 
 class Tree:
@@ -12,12 +16,49 @@ class Tree:
         if self.right:
             self.right.parent = self
 
+    def __lt__(self, other):
+        return self.data < other.data
 
     def __str__(self):
         return str(self.data)
     
     def str(self):
         return str(self.data)
+
+
+    def to_graph(self):
+        g = nx.Graph()
+        for node in dfs_nodes(self):
+            if node.left:
+                g.add_edge(node.data, node.left.data)
+            if node.right:
+                g.add_edge(node.data, node.right.data)
+
+        return g
+
+    def get_positions(node, positions, x, y):
+        if node:
+            node_size = 0.5
+            
+            my_x = (x[1] + x[0]) / 2
+            my_y = y[0] + (node_size / 2)
+
+            positions[node.data] = (my_x, -my_y)
+            Tree.get_positions(node.left, positions, (x[0], my_x), (my_y, y[1]))
+            Tree.get_positions(node.right, positions, (my_x, x[1]), (my_y, y[1]))
+
+    def draw(self):
+        positions = {}
+        Tree.get_positions(self, positions, x=(0, 10), y=(0, 10))
+
+        print(positions)
+
+        g = self.to_graph()
+
+        plt.axis('on')
+        nx.draw_networkx(g, positions, node_size=1500, font_size=24, node_color='g')
+        plt.show()
+
 
 
 def height(tree):
@@ -35,7 +76,6 @@ def dfs_nodes(tree):
 def bfs_nodes(tree):
     queue = []
     queue.append(tree)
-
     while queue:
         node = queue.pop(0)
         if node:
@@ -43,17 +83,17 @@ def bfs_nodes(tree):
             queue.append(node.left)
             queue.append(node.right)
 
+
 def is_bst(tree):
-    pass
+    if not tree:
+        return True
 
+    left_ok = not tree.left or tree.left < tree
+    right_ok = not tree.right or tree < tree.right
 
-def min_node_recursive(bst):
-    assert is_bst(bst) and bst is not None
+    return left_ok and right_ok and \
+        is_bst(tree.left) and is_bst(tree.right)
 
-    if not bst.left:
-        return bst
-
-    return min_node_recursive(bst.left)
 
 def min_node(bst):
     assert is_bst(bst) and bst is not None
@@ -97,42 +137,44 @@ def iterate(bst):
 def lower_bound(bst, x):
     assert is_bst(bst)
 
-    if bst.data < x:
-        return lower_bound(bst.right, x)
+    if bst:
+        if x < bst.data:
+            res = lower_bound(bst.left, x)
+            if res:
+                bst = res
 
-    if x < bst.data:
-        res = lower_bound(bst.left)
-        if res:
-            return res
+        elif bst.data < x:
+            return lower_bound(bst.right, x) 
 
-    return bst;
-
-def lower_bound2(bst, x):
-    assert is_bst(bst)
-
-    if not bst:
-        return bst
-
-    if x < bst.data:
-        res = lower_bound2(bst.left)
-    else:
-        res = lower_bound2(bst.right)
-    
-    if not res: # not found
-        return lower_bound2(bst.parent)
-    return res
-
-    
+    return bst
 
 
 def insert(tree, x):
+    assert is_bst(tree)
 
-    place = lower_bound(tree, x)
+    if x < tree.data:
+        if tree.left:
+            return insert(tree.left, x)
+        else:
+            tree.left = Tree(x)
+            return tree.left
+
+    elif tree.data < x:
+        if tree.right:
+            return insert(tree.right, x)
+        else:
+            tree.right = Tree(x)
+            return tree.right
+
+    return tree
 
 
 
-def main():
-    t = Tree(10,
+
+
+
+def create_tree_1():
+    return Tree(10,
             Tree(4,
                 Tree(3),
                 Tree(5,
@@ -143,14 +185,29 @@ def main():
                             Tree(16),
                             Tree(18, right=Tree(19))))))
 
+def create_tree_2():
+    return Tree(8,
+            Tree(3,
+                Tree(1),
+                Tree(6,
+                    Tree(4),
+                    Tree(7))),
+            Tree(10, 
+                right=Tree(14,
+                    Tree(13))))
+
+def main():
     
+    t = create_tree_2()    
     
+    insert(t, 5)
+    insert(t, 9)
+
     print(", ".join(map(str, dfs_nodes(t))))
 
+    t.draw()    
     
     
-    
-
 
 
 

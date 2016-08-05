@@ -20,11 +20,9 @@ class GraphVertex:
 
 class Graph:
 
-    
     class GraphError(Exception):
         def __init__(self, arg):
                 super(GraphError, self).__init__(arg)
-           
 
     def __init__(self):
         self.adjList = {}
