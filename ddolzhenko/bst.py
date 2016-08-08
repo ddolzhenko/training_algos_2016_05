@@ -33,16 +33,13 @@ class Tree:
                 g.add_edge(node.data, node.left.data)
             if node.right:
                 g.add_edge(node.data, node.right.data)
-
         return g
 
     def get_positions(node, positions, x, y):
         if node:
             node_size = 0.5
-            
             my_x = (x[1] + x[0]) / 2
             my_y = y[0] + (node_size / 2)
-
             positions[node.data] = (my_x, -my_y)
             Tree.get_positions(node.left, positions, (x[0], my_x), (my_y, y[1]))
             Tree.get_positions(node.right, positions, (my_x, x[1]), (my_y, y[1]))
@@ -50,9 +47,6 @@ class Tree:
     def draw(self):
         positions = {}
         Tree.get_positions(self, positions, x=(0, 10), y=(0, 10))
-
-        print(positions)
-
         g = self.to_graph()
 
         plt.axis('on')
@@ -88,15 +82,15 @@ def is_bst(tree):
     if not tree:
         return True
 
-    left_ok = not tree.left or tree.left < tree
-    right_ok = not tree.right or tree < tree.right
-
-    return left_ok and right_ok and \
-        is_bst(tree.left) and is_bst(tree.right)
-
+    return \
+        (not tree.left or (max_node(tree.left) < tree)) and  \
+        (not tree.right or (tree < min_node(tree.right))) and \
+        is_bst(tree.left) and \
+        is_bst(tree.right)
+   
 
 def min_node(bst):
-    assert is_bst(bst) and bst is not None
+    # assert is_bst(bst) and bst is not None
 
     while bst.left:
         bst = bst.left
@@ -104,7 +98,7 @@ def min_node(bst):
     return bst
 
 def max_node(bst):
-    assert is_bst(bst) and bst is not None
+    # assert is_bst(bst) and bst is not None
 
     while bst.right:
         bst = bst.right
@@ -112,13 +106,32 @@ def max_node(bst):
     return bst
 
 def next_node(bst):
+    assert bst
+
     if bst.right:
         return min_node(bst.right)
+
+    if bst.parent:
+        if bst.parent.left == bst:
+            return bst.parent
+            
+        while bst.parent and bst.parent.right == bst:
+            bst = bst.parent
+
     return bst.parent
+
 
 def prev_node(bst):
     if bst.left:
         return max_node(bst.left)
+
+    if bst.parent:
+        if bst.parent.right == bst:
+            return bst.parent
+
+        while bst.parent and bst.parent.left == bst:
+            bst = bst.parent
+    
     return bst.parent
 
 begin = min_node
@@ -126,13 +139,11 @@ begin = min_node
 def end(bst):
     return None
 
-
 def iterate(bst):
     it = begin(bst)
     while it != end(bst):
         yield it
         it = next_node(it)
-
 
 def lower_bound(bst, x):
     assert is_bst(bst)
@@ -149,14 +160,33 @@ def lower_bound(bst, x):
     return bst
 
 
+def insert_to(ref, x):
+    if ref[0]:
+        return insert2(ref[0], x)
+    ref[0] = Tree(x)
+    return ref[0]
+
+def insert2(tree, x):
+    assert is_bst(tree) and tree is not None
+
+    if x < tree.data:
+        return insert_to([tree.left], x)
+    elif tree.data < x:
+        return insert_to([tree.right], x)
+        
+    return tree
+
+
+
 def insert(tree, x):
-    assert is_bst(tree)
+    assert is_bst(tree) and tree is not None
 
     if x < tree.data:
         if tree.left:
             return insert(tree.left, x)
         else:
             tree.left = Tree(x)
+            tree.left.parent = tree
             return tree.left
 
     elif tree.data < x:
@@ -164,13 +194,10 @@ def insert(tree, x):
             return insert(tree.right, x)
         else:
             tree.right = Tree(x)
+            tree.right.parent = tree
             return tree.right
 
     return tree
-
-
-
-
 
 
 def create_tree_1():
@@ -178,7 +205,7 @@ def create_tree_1():
             Tree(4,
                 Tree(3),
                 Tree(5,
-                    Tree(5))),
+                    right=Tree(6))),
             Tree(20,
                 Tree(15,
                     right=Tree(17,
@@ -196,16 +223,33 @@ def create_tree_2():
                 right=Tree(14,
                     Tree(13))))
 
+def create_tree_3():
+    return Tree(3,
+                Tree(2),
+                Tree(5,
+                    Tree(1),
+                    Tree(7)))
+
 def main():
     
     t = create_tree_2()    
     
     insert(t, 5)
-    insert(t, 9)
+    # insert(t, 9)
 
     print(", ".join(map(str, dfs_nodes(t))))
+    
 
-    t.draw()    
+    # for x in iterate(t):
+    #     print (x)
+
+    print(", ".join(map(str, iterate(t))))
+
+    print(is_bst(create_tree_1()))
+    print(is_bst(create_tree_2()))
+    print(is_bst(create_tree_3()))
+
+    # create_tree_1().draw()    
     
     
 
