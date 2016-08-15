@@ -10,6 +10,7 @@ class Tree:
         self.left = left
         self.right = right
         self.parent = None
+        self.is_black = True
 
         if self.left:
             self.left.parent = self
@@ -198,6 +199,29 @@ def insert(tree, x):
             return tree.right
 
     return tree
+
+def is_black(node):
+    return not node or node.is_black
+
+def is_red(node):
+    return not is_black(node)
+
+def insert_rb_tree(tree, x):
+    assert is_rbtree(tree)
+
+    node = insert(tree, x)
+
+    if is_black(node.parent):
+        node.is_black = False
+        return
+
+    
+
+
+    assert is_rbtree(tree)
+
+
+
 
 
 def create_tree_1():
